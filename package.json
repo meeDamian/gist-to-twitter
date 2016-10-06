@@ -1,0 +1,19 @@
+{
+  "name": "gist-to-twitter",
+  "version": "1.0.0",
+  "description": "Listens for gists and tweets them",
+  "main": "index.js",
+  "scripts": {
+    "test": "xo && ava"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/meeDamian/gist-to-twitter.git"
+  },
+  "author": "Damian Mee <mee.damian@gmail.com> (https://meedamian.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/meeDamian/gist-to-twitter/issues"
+  },
+  "homepage": "https://github.com/meeDamian/gist-to-twitter#readme"
+}
