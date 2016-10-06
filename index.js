@@ -21,12 +21,12 @@ function getGistJson({gist}) {
 
 db.any('SELECT * FROM pipes')
   .then(data => {
-    return Promise.All(data.map(getGistJson))
+    return Promise.all(data.map(getGistJson))
       .then(x => {
         console.log(x.files);
       });
   })
-  .then()
+  .then(console.log)
   .then(() => process.exit(0))
   .catch(err => {
     console.error('Error:', err);
