@@ -24,5 +24,8 @@
   "devDependencies": {
     "ava": "^0.16.0",
     "xo": "^0.16.0"
+  },
+  "dependencies": {
+    "pg-promise": "^5.3.4"
   }
 }
