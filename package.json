@@ -4,7 +4,12 @@
   "description": "Listens for gists and tweets them",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "xo && ava"
+  },
+  "engines": {
+    "node": "^6.6.0",
+    "npm": "^3.10.8"
   },
   "repository": {
     "type": "git",
@@ -15,5 +20,9 @@
   "bugs": {
     "url": "https://github.com/meeDamian/gist-to-twitter/issues"
   },
-  "homepage": "https://github.com/meeDamian/gist-to-twitter#readme"
+  "homepage": "https://github.com/meeDamian/gist-to-twitter#readme",
+  "devDependencies": {
+    "ava": "^0.16.0",
+    "xo": "^0.16.0"
+  }
 }
