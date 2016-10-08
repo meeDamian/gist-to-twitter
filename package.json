@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "xo && ava"
+    "test": "xo && nyc ava && nyc report --reporter=text-lcov > coverage.lcov"
   },
   "engines": {
     "node": "^6.6.0",
@@ -23,10 +23,20 @@
   "homepage": "https://github.com/meeDamian/gist-to-twitter#readme",
   "devDependencies": {
     "ava": "^0.16.0",
+    "coveralls": "^2.11.14",
+    "nyc": "^8.3.1",
     "xo": "^0.16.0"
   },
   "dependencies": {
-    "emoji-flag": "^1.1.0",
+    "country-emoji": "^1.2.0",
+    "mee": "^0.11.3",
     "pg-promise": "^5.3.4"
+  },
+  "xo": {
+    "esnext": true,
+    "envs": [
+      "node"
+    ],
+    "space": true
   }
 }
