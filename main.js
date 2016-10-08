@@ -2,68 +2,80 @@
 
 let me = {};
 
-me.checkIfChanged = function({db}, data) {
-  return db.getLastData(data.gist)
-    .then(hash => {
-
-
-      if (hash === data.hash) {
-        throw new Error('No change');
+me.checkIfChanged = function({db, u: {propsEqual}}, fromGist) {
+  return db.getLastData(fromGist.gist)
+    .then(fromDb => {
+      if (propsEqual(fromGist, fromDb, 'country', 'city', 'phone')) {
+        return;
       }
 
-      return data;
+      return fromGist;
     })
     .catch(err => {
-      throw new Error(`selecting last update for ${data.gist} flopped: ${err.message}`);
+      throw new Error(`selecting last update for ${fromGist.gist} flopped: ${err.message}`);
     });
 }
 
 me.processGist = function({gist: {download, process}, console}, {gist, token, secret}) {
   return download(gist)
     .then(process)
+
+    // check for changes against db
     .then(me.checkIfChanged)
-    .then(gist => ({gist, twitter: {token, secret}}))
+
+    // attach twitter credentials if changed
+    .then(gist => gist ? {gist, twitter: {token, secret}} : undefined)
     .catch(err => {
       console.error(`Error processing ${gist}:`, err.message);
       return undefined;
     });
 }
 
-function cache(data) {
-  return data;
+me.cache = function({db, console}, data) {
+  return db.putUpdate(data.gist)
+    .then(() => data)
+    .catch(err => {
+      console.error(`Error caching ${data.gist}:`, err.message);
+      return;
+    });
 }
 
-me.tweet = function(data) {
+me.tweet = function(_, data) {
   return data;
 };
 
-me.main = function({u: {removeEmpty, promisedEach}, db, process, console}) {
+me.main = function({u: {removeEmpty, promisedEach, inspect}, db, process, console}) {
   // get all gist <-> twitter pairs
   db.getPipes()
 
-    // download ad process all gists
+    // download and process all gists
     .then(promisedEach(me.processGist))
 
     // eliminate all null entries
-    //   null returned when further execution not possible or not needed
+    //   null returned when further execution either not possible or not needed
     .then(removeEmpty)
 
-    .then(cache)
+    // cache before tweet, bcoz it's better to skip a tweet, than tweet 1000x
+    .then(promisedEach(me.cache))
+
+    .then(inspect(e => JSON.stringify(e, null, 2)))
 
     // tweet all remaining
     .then(promisedEach(me.tweet))
 
-    .then(e => JSON.stringify(e, null, 2))
 
     .then(console.log)
 
     // exit cleanly
     .then(() => process.exit(0))
-
-    // this shouldn't happen
     .catch(err => {
-      console.error('Error:', err);
-      process.exit(1);
+      if (err.message !== 'done') {
+        console.error('Error:', err.message);
+        process.exit(1);
+        return;
+      }
+
+      process.exit(0);
   });
 }
 

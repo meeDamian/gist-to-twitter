@@ -30,7 +30,8 @@
   "dependencies": {
     "country-emoji": "^1.2.0",
     "mee": "^0.11.3",
-    "pg-promise": "^5.3.4"
+    "pg-promise": "^5.3.4",
+    "request": "^2.75.0"
   },
   "xo": {
     "esnext": true,

@@ -10,22 +10,22 @@ let me = {
   USER_AGENT
 };
 
-me.download = function({https}, gist) {
+me.download = function({request}, gist) {
   return new Promise((resolve, reject) => {
-    https.get({
-      hostname: 'api.github.com',
-      path: `/gists/${gist}`,
-      headers: {'User-Agent': USER_AGENT}
-    }, res => {
-      let body = '';
+    request.get({url: `https://api.github.com/gists/${gist}`, json:true, headers: {
+      'User-Agent': USER_AGENT
+    }}, (err, res, json) => {
+      if (err || res.statusCode !== 200) {
+        reject(err);
+        return;
+      }
 
-      res.on('data', chunk => body += chunk);
-      res.on('end', () => resolve({json: JSON.parse(body), gist}));
-    }).on('error', reject);
+      resolve({json, gist});
+    });
   });
 };
 
-me.process = function({flag, u}, {gist, json: {message, updated_at: at, files}}) {
+me.process = function({u}, {gist, json: {message, updated_at: at, files}}) {
   if (message && message === ERR_NOT_FOUND) {
     throw new Error(`gist ${ERR_NOT_FOUND}`);
   }
@@ -35,23 +35,10 @@ me.process = function({flag, u}, {gist, json: {message, updated_at: at, files}})
     throw new Error(`required file ${FILENAME} is missing`);
   }
 
-  const json = JSON.parse(locationFile.content);
-  const text = [
-    flag(json.country),
-    json.city || undefined,
-    json.phone ? `📱 ${json.phone}` : undefined
-  ].filter(u.empty).join(' ');
-
-  return Object.assign(json, {
-    at,
-    text,
-    gist
-  });
+  return Object.assign(JSON.parse(locationFile.content), {at, gist});
 };
 
 me = require('mee')(module, me, {
-  https: require('https'),
-  flag: require('country-emoji').flag,
-
+  request: require('request'),
   u: require('./u.js')
 });
