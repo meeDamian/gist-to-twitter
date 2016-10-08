@@ -3,6 +3,7 @@
 const FILENAME = 'location.json';
 const ERR_NOT_FOUND = 'Not Found';
 const USER_AGENT = 'meeDamian';
+const GITHUB_AUTH = `client_id=${process.env.GITHUB_ID}&client_secret=${process.env.GITHUB_SECRET}`;
 
 let me = {
   FILENAME,
@@ -12,11 +13,11 @@ let me = {
 
 me.download = function({request}, gist) {
   return new Promise((resolve, reject) => {
-    request.get({url: `https://api.github.com/gists/${gist}`, json:true, headers: {
+    request.get({url: `https://api.github.com/gists/${gist}?${GITHUB_AUTH}`, json: true, headers: {
       'User-Agent': USER_AGENT
     }}, (err, res, json) => {
       if (err || res.statusCode !== 200) {
-        reject(err);
+        reject(err || new Error('different gist error', json));
         return;
       }
 

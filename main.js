@@ -40,11 +40,7 @@ me.cache = function({db, console}, data) {
     });
 }
 
-me.tweet = function(_, data) {
-  return data;
-};
-
-me.main = function({u: {removeEmpty, promisedEach, inspect}, db, process, console}) {
+me.main = function({u: {removeEmpty, promisedEach, inspect}, twitter: {tweet}, db, process, console}) {
   // get all gist <-> twitter pairs
   db.getPipes()
 
@@ -58,12 +54,10 @@ me.main = function({u: {removeEmpty, promisedEach, inspect}, db, process, consol
     // cache before tweet, bcoz it's better to skip a tweet, than tweet 1000x
     .then(promisedEach(me.cache))
 
-    .then(inspect(e => JSON.stringify(e, null, 2)))
-
     // tweet all remaining
-    .then(promisedEach(me.tweet))
+    .then(promisedEach(tweet))
 
-
+    // TODO: display progress better
     .then(console.log)
 
     // exit cleanly
@@ -80,6 +74,7 @@ me.main = function({u: {removeEmpty, promisedEach, inspect}, db, process, consol
 }
 
 me = require('mee')(module, me, {
+  twitter: require('./twitter.js'),
   gist: require('./gist.js'),
   db: require('./db.js'),
   u: require('./u.js'),
