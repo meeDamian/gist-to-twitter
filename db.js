@@ -8,7 +8,7 @@ me.getPipes = function({db}) {
 
 me.getLastData = function({db}, gist) {
   return db.oneOrNone('SELECT country, city, phone, at FROM update WHERE gist = $1 ORDER BY at DESC LIMIT 1', [gist])
-    .then(d => d ? d : {});
+    .then(d => d || {});
 };
 
 me.putUpdate = function({db}, {gist, country, city, phone, at}) {
