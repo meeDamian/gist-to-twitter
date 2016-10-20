@@ -1,45 +1,108 @@
 'use strict';
 
-const FILENAME = 'location.json';
+const JSONFILE = 'location.json';
+const TEXTFILE = 'location.txt';
 const ERR_NOT_FOUND = 'Not Found';
-const USER_AGENT = 'meeDamian';
+const USER_AGENT = {'User-Agent': 'meeDamian'};
+const URL = 'https://api.github.com/gists';
 const GITHUB_AUTH = `client_id=${process.env.GITHUB_ID}&client_secret=${process.env.GITHUB_SECRET}`;
 
 let me = {
-  FILENAME,
+  JSONFILE,
+  TEXTFILE,
   ERR_NOT_FOUND,
-  USER_AGENT
+  USER_AGENT,
+  URL,
+  GITHUB_AUTH
 };
 
 me.download = function({request}, gist) {
   return new Promise((resolve, reject) => {
-    request.get({url: `https://api.github.com/gists/${gist}?${GITHUB_AUTH}`, json: true, headers: {
-      'User-Agent': USER_AGENT
-    }}, (err, res, json) => {
+    request.get({json: true,
+      url: `${URL}/${gist}?${GITHUB_AUTH}`,
+      headers: USER_AGENT
+    }, (err, res, json) => {
       if (err || res.statusCode !== 200) {
-        reject(err || new Error('different gist error', json));
+        reject(err || new Error(`Can't download gist(${gist}): ${json.message}`));
         return;
       }
 
-      resolve({json, gist});
+      resolve({gist, json});
     });
   });
 };
 
-me.process = function({u}, {gist, json: {message, updated_at: at, files}}) {
+me.process = function(_, {gist, json: {message, files}}) {
   if (message && message === ERR_NOT_FOUND) {
-    throw new Error(`gist ${ERR_NOT_FOUND}`);
+    throw new Error(`gist(${gist}) ${ERR_NOT_FOUND}`);
   }
 
-  const locationFile = files[FILENAME];
-  if (!locationFile) {
-    throw new Error(`required file ${FILENAME} is missing`);
+  const out = {};
+
+  const jsonFile = files[JSONFILE];
+  if (jsonFile) {
+    out.json = JSON.parse(jsonFile.content);
   }
 
-  return Object.assign(JSON.parse(locationFile.content), {at, gist});
+  const textFile = files[TEXTFILE];
+  if (textFile) {
+    out.text = textFile.content;
+  }
+
+  return out;
+};
+
+me.preparePatch = function({theSame}, body) {
+  return ({json, text}) => {
+    const files = {};
+
+    if (!theSame(body, json)) {
+      files[JSONFILE] = {
+        content: JSON.stringify({
+          country: body.country,
+          city: body.city,
+          phone: body.phone
+        }, null, 2)
+      };
+    }
+
+    if (text !== body.text) {
+      files[TEXTFILE] = {
+        content: body.text
+      };
+    }
+
+    return {files};
+  };
+};
+
+me.update = function({request}, {gist, token, user}) {
+  return body => {
+    return new Promise((resolve, reject) => {
+      request.patch({json: true, body, auth: {user, pass: token},
+        url: `${URL}/${gist}`,
+        headers: USER_AGENT
+      }, (err, res, json) => {
+        if (err || res.statusCode !== 200) {
+          reject(err || new Error(`Can't edit gist(${gist}): ${json.message}`));
+          return;
+        }
+
+        resolve();
+      });
+    });
+  }
+};
+
+me.doThings = function({request}, {github, curr}) {
+  return me.download(github.gist)
+    .then(me.process)
+    .then(me.preparePatch(curr))
+    .then(me.update(github))
+    .catch(err => err.message);
 };
 
 me = require('mee')(module, me, {
   request: require('request'),
-  u: require('./u.js')
+  theSame: require('./local').theSame
 });
