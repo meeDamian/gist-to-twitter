@@ -2,8 +2,12 @@
 
 let me = {};
 
-me.get = function ({db}, hash) {
-  return db.oneOrNone(`
+me.connection = function ({db, process: {env: {DATABASE_URL}}}) {
+  return db()(DATABASE_URL);
+};
+
+me.get = function (_, hash) {
+  return me.connection().oneOrNone(`
     SELECT  hash, country, city, phone, at,
 
             twitter.username AS twittername,
@@ -26,14 +30,16 @@ me.get = function ({db}, hash) {
   `, [hash]);
 };
 
-me.save = function ({db}, hash, {country, city, phone}) {
-  return db.none('INSERT INTO data (hash, country, city, phone) VALUES ($1, $2, $3, $4)', [hash, country, city, phone]);
+me.save = function (_, hash, {country, city, phone}) {
+  return me.connection().none('INSERT INTO data (hash, country, city, phone) VALUES ($1, $2, $3, $4)', [hash, country, city, phone]);
 };
 
-me.new = function ({db}, hash) {
-  return db.none('INSERT INTO refs (hash) VALUES ($1)', [hash]);
+me.newHash = function (_, hash) {
+  return me.connection().none('INSERT INTO refs (hash) VALUES ($1)', [hash]);
 };
 
 me = require('mee')(module, me, {
-  db: require('pg-promise')()(process.env.DATABASE_URL)
+  db: require('pg-promise'),
+
+  process
 });

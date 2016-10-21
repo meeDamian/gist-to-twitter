@@ -5,7 +5,7 @@ let me = {};
 me.handleNoHash = function ({db}, hash) {
   return data => {
     if (!data) {
-      return db.new(hash)
+      return db.newHash(hash)
         .then(() => ({hash}))
         .catch(err => {
           console.error('handleNoHash():', err);
