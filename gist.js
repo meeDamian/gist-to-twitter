@@ -97,7 +97,7 @@ me.update = function ({request}, {gist, token, user}) {
 
 me.doThings = function ({request}, {github, curr}) {
   if (!github) {
-    return 'No Gist/Github account specified';
+    return 'No account configured';
   }
 
   return me.download(github.gist)

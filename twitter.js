@@ -118,6 +118,10 @@ me.prepareAndSend = function (_, req, prev, curr) {
 };
 
 me.tweet = function ({local}, {twitter, prev, curr}) {
+  if (!twitter) {
+    return 'No account configured';
+  }
+
   // [instant] prevent if the same data cached in db
   if (local.theSame(prev, curr, true)) {
     return;
