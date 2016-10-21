@@ -44,7 +44,7 @@ me.getMapUrl = function ({process: {env: {MAPS_KEY}}}, locFrom, locTo) {
   return encodeURI(`https://maps.googleapis.com/maps/api/staticmap?${query}&key=${MAPS_KEY}`);
 };
 
-me.downloadPipe = function ({request}, locFrom, locTo) {
+me.downloadStream = function ({request}, locFrom, locTo) {
   return request.get(me.getMapUrl(locFrom, locTo));
 };
 

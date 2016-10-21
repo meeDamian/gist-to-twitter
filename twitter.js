@@ -46,7 +46,7 @@ me.getMediaId = function ({maps}, req, prev, curr) {
     req({
       url: 'https://upload.twitter.com/1.1/media/upload.json',
       formData: {
-        media: maps.downloadPipe(prev, curr)
+        media: maps.downloadStream(prev, curr)
       }
     }, (err, res, json) => {
       if (err || res.statusCode !== 200) {
@@ -93,6 +93,7 @@ me.tweet = function (_, {twitter, prev, curr}) {
   const req = me.req(twitter);
 
   // TODO: limit tweeting!!!
+  // TODO: handle empty prev
 
   return Promise.all([
     me.getMediaId(req, prev, curr),
