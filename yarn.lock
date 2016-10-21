@@ -1219,7 +1219,7 @@ country-emoji@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/country-emoji/-/country-emoji-1.2.0.tgz#7214abde696c27d5045fd2b1f731cbc70a81f2a4"
 
-coveralls@^2.11.14:
+coveralls:
   version "2.11.14"
   resolved "https://registry.yarnpkg.com/coveralls/-/coveralls-2.11.14.tgz#645a05ac72aa4f2ee811c667390d4ad36f0c2e26"
   dependencies:
