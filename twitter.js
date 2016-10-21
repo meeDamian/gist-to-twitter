@@ -78,7 +78,7 @@ me.getMediaId = function ({maps}, req, prev, curr) {
       media: maps.downloadStream(prev, curr)
     }
   })
-  .then(({media_id_string}) => media_id_string)
+  .then(m => m.media_id_string)
   .catch(err => (err && err.message) || new Error(`Can't upload image to Twitter`));
 };
 
