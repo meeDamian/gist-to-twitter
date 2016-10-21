@@ -2,11 +2,11 @@
 
 let me = {};
 
-me.locString = function(_, {country, city}) {
+me.locString = function (_, {country, city}) {
   return `${city},${country}`;
-}
+};
 
-me.uriMarker = function(_, loc, dest = true) {
+me.uriMarker = function (_, loc, dest = true) {
   const marker = [
     `label:${dest ? 'B' : 'A'}`,
     `color:${dest ? 'red' : 'gray'}`
@@ -16,13 +16,13 @@ me.uriMarker = function(_, loc, dest = true) {
     marker.push('size:mid');
   }
 
-  // has to be last
+  // NOTE: has to be last
   marker.push(me.locString(loc));
 
   return marker.join('|');
 };
 
-me.uriPath = function(_, locFrom, locTo) {
+me.uriPath = function (_, locFrom, locTo) {
   return [
     'color:blue',
     'geodesic:true',
@@ -32,7 +32,7 @@ me.uriPath = function(_, locFrom, locTo) {
   ].join('|');
 };
 
-me.getPathUrl = function ({process: {env: {MAPS_KEY}}}, locFrom, locTo) {
+me.getMapUrl = function ({process: {env: {MAPS_KEY}}}, locFrom, locTo) {
   const query = [
     `markers=${me.uriMarker(locFrom, false)}`,
     `markers=${me.uriMarker(locTo)}`,
@@ -44,8 +44,8 @@ me.getPathUrl = function ({process: {env: {MAPS_KEY}}}, locFrom, locTo) {
   return encodeURI(`https://maps.googleapis.com/maps/api/staticmap?${query}&key=${MAPS_KEY}`);
 };
 
-me.downloadPipe = function({request}, locFrom, locTo) {
-  return request.get(me.getPathUrl(locFrom, locTo));
+me.downloadPipe = function ({request}, locFrom, locTo) {
+  return request.get(me.getMapUrl(locFrom, locTo));
 };
 
 me = require('mee')(module, me, {

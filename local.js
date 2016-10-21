@@ -2,19 +2,20 @@
 
 let me = {};
 
-me.emojiString = function({u: {empty}, flag}, {country, city, phone}) {
+me.emojiString = function (_, {flag, city, phone}) {
   return [
-    flag(country),
+    flag || undefined,
     city || undefined,
     phone ? `📱 ${phone}` : undefined
-  ].filter(empty).join(' ');
+  ].filter(v => Boolean(v)).join(' ');
 };
 
-me.normalize = function(_, {country, city, phone, at}, extended = false) {
+me.normalize = function ({flag}, {country, city, phone, at}, extended = false) {
   const out = {};
 
   if (country && typeof country === 'string') {
     out.country = country.trim();
+    out.flag = flag(out.country);
   }
 
   if (city && typeof city === 'string') {
@@ -27,7 +28,7 @@ me.normalize = function(_, {country, city, phone, at}, extended = false) {
 
   if (extended) {
     if (Object.keys(out).length > 1) {
-      out.text = me.emojiString({country, city, phone});
+      out.text = me.emojiString(out);
     }
 
     if (at) {
@@ -38,8 +39,8 @@ me.normalize = function(_, {country, city, phone, at}, extended = false) {
   return out;
 };
 
-me.theSame = function(_, a, b, exactly = false) {
-  return ['country', 'city', 'phone'].filter(p => {
+me.theSame = function (_, a, b, exactly = false) {
+  return ['country', 'city', 'phone', 'flag'].filter(p => {
     const A = a[p];
     const B = b[p];
 
@@ -53,13 +54,13 @@ me.theSame = function(_, a, b, exactly = false) {
       return true;
     }
 
-    return exactly
-      ? A !== B
-      : A.toLowerCase() !== B.toLowerCase();
+    return exactly ?
+      A !== B :
+      A.toLowerCase() !== B.toLowerCase();
   }).length === 0;
 };
 
-me.reformat = function(_, hash, body) {
+me.reformat = function (_, hash, body) {
   return data => {
     const struct = {
       hash,
@@ -84,11 +85,9 @@ me.reformat = function(_, hash, body) {
     }
 
     return struct;
-  }
+  };
 };
 
 me = require('mee')(module, me, {
-  u: require('./u'),
-
   flag: require('country-emoji').flag
 });

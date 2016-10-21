@@ -2,7 +2,7 @@
 
 let me = {};
 
-me.get = function({db}, hash) {
+me.get = function ({db}, hash) {
   return db.oneOrNone(`
     SELECT  hash, country, city, phone, at,
 
@@ -26,11 +26,11 @@ me.get = function({db}, hash) {
   `, [hash]);
 };
 
-me.save = function({db}, hash, {country, city, phone}) {
+me.save = function ({db}, hash, {country, city, phone}) {
   return db.none('INSERT INTO data (hash, country, city, phone) VALUES ($1, $2, $3, $4)', [hash, country, city, phone]);
 };
 
-me.new = function({db}, hash) {
+me.new = function ({db}, hash) {
   return db.none('INSERT INTO refs (hash) VALUES ($1)', [hash]);
 };
 

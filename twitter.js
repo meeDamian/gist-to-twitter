@@ -2,7 +2,7 @@
 
 let me = {};
 
-me.req = function({request, process: {env: {TWITTER_KEY, TWITTER_SECRET}}}, {token, secret}) {
+me.req = function ({request, process: {env: {TWITTER_KEY, TWITTER_SECRET}}}, {token, secret}) {
   return request.defaults({
     json: true,
     method: 'post',
@@ -15,11 +15,11 @@ me.req = function({request, process: {env: {TWITTER_KEY, TWITTER_SECRET}}}, {tok
   });
 };
 
-me.format = function({emojiString}, data) {
+me.format = function ({emojiString}, data) {
   return `${emojiString(data)} #onthemove`;
 };
 
-me.getPlaceId = function(_, req, {country, city}) {
+me.getPlaceId = function (_, req, {country, city}) {
   return new Promise((resolve, reject) => {
     req({
       url: 'https://api.twitter.com/1.1/geo/search.json',
@@ -41,38 +41,45 @@ me.getPlaceId = function(_, req, {country, city}) {
   .then(({result}) => result.places[0].id);
 };
 
-me.getMediaId = function({maps}, req, prev, curr) {
+me.getMediaId = function ({maps}, req, prev, curr) {
   return new Promise((resolve, reject) => {
     req({
-        url: 'https://upload.twitter.com/1.1/media/upload.json',
-        formData: {
-          media: maps.downloadPipe(prev, curr)
-        }
-      }, (err, res, json) => {
-        if (err || res.statusCode !== 200) {
-          reject(err || new Error(`Can't upload image to Twitter ${res.statusCode}`));
-          return;
-        }
+      url: 'https://upload.twitter.com/1.1/media/upload.json',
+      formData: {
+        media: maps.downloadPipe(prev, curr)
+      }
+    }, (err, res, json) => {
+      if (err || res.statusCode !== 200) {
+        reject(err || new Error(`Can't upload image to Twitter ${res.statusCode}`));
+        return;
+      }
 
-        resolve(json.media_id_string);
-      });
+      resolve(json.media_id_string);
     });
+  });
 };
 
-me.postTweet = function(_, req, curr) {
+me.postTweet = function (_, req, curr) {
   return ([mediaId, placeId]) => {
     return new Promise((resolve, reject) => {
+      const qs = {
+        status: me.format(curr),
+        trim_user: true
+      };
+
+      if (placeId) {
+        qs.place_id = placeId;
+      }
+
+      if (mediaId) {
+        qs.media_ids = mediaId;
+      }
+
       req({
-        url: 'https://api.twitter.com/1.1/statuses/update.json',
-        qs: {
-          status: me.format(curr),
-          trim_user: true,
-          place_id: placeId,
-          media_ids: mediaId
-        }
+        qs, url: 'https://api.twitter.com/1.1/statuses/update.json'
       }, (err, res, json) => {
         if (err || res.statusCode !== 200) {
-          reject(err || new Error(`Can't post status update: ${json.errors || json}`))
+          reject(err || new Error(`Can't post status update: ${json.errors || json}`));
           return;
         }
 
@@ -82,7 +89,7 @@ me.postTweet = function(_, req, curr) {
   };
 };
 
-me.tweet = function(_, {twitter, prev, curr}) {
+me.tweet = function (_, {twitter, prev, curr}) {
   const req = me.req(twitter);
 
   // TODO: limit tweeting!!!

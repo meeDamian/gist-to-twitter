@@ -16,7 +16,7 @@ let me = {
   GITHUB_AUTH
 };
 
-me.download = function({request}, gist) {
+me.download = function ({request}, gist) {
   return new Promise((resolve, reject) => {
     request.get({json: true,
       url: `${URL}/${gist}?${GITHUB_AUTH}`,
@@ -32,7 +32,7 @@ me.download = function({request}, gist) {
   });
 };
 
-me.process = function(_, {gist, json: {message, files}}) {
+me.process = function (_, {gist, json: {message, files}}) {
   if (message && message === ERR_NOT_FOUND) {
     throw new Error(`gist(${gist}) ${ERR_NOT_FOUND}`);
   }
@@ -52,7 +52,7 @@ me.process = function(_, {gist, json: {message, files}}) {
   return out;
 };
 
-me.preparePatch = function({theSame}, body) {
+me.preparePatch = function ({theSame}, body) {
   return ({json, text}) => {
     const files = {};
 
@@ -60,6 +60,7 @@ me.preparePatch = function({theSame}, body) {
       files[JSONFILE] = {
         content: JSON.stringify({
           country: body.country,
+          flag: body.flag,
           city: body.city,
           phone: body.phone
         }, null, 2)
@@ -76,7 +77,7 @@ me.preparePatch = function({theSame}, body) {
   };
 };
 
-me.update = function({request}, {gist, token, user}) {
+me.update = function ({request}, {gist, token, user}) {
   return body => {
     return new Promise((resolve, reject) => {
       request.patch({json: true, body, auth: {user, pass: token},
@@ -91,15 +92,18 @@ me.update = function({request}, {gist, token, user}) {
         resolve();
       });
     });
-  }
+  };
 };
 
-me.doThings = function({request}, {github, curr}) {
+me.doThings = function ({request}, {github, curr}) {
   return me.download(github.gist)
     .then(me.process)
     .then(me.preparePatch(curr))
     .then(me.update(github))
-    .catch(err => err.message);
+    .catch(err => {
+      console.error(err);
+      return err.message;
+    });
 };
 
 me = require('mee')(module, me, {
