@@ -8,7 +8,7 @@ me.connection = function ({db, process: {env: {DATABASE_URL}}}) {
 
 me.get = function (_, hash) {
   return me.connection().oneOrNone(`
-    SELECT  hash, country, city, phone, at,
+    SELECT  hash, country, city, phone, data.at AS at,
 
             twitter.username AS twittername,
             twitter.token AS twitter_token,
@@ -25,7 +25,7 @@ me.get = function (_, hash) {
     LEFT JOIN   github
       USING     (github_id)
     WHERE   hash = $1
-    ORDER   BY at DESC
+    ORDER   BY data.at DESC
     LIMIT   1
   `, [hash]);
 };
