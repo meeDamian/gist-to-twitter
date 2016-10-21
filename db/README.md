@@ -1,3 +1,3 @@
 ```
-$ goose -path . -env heroku up
+$ goose -env heroku up
 ```
