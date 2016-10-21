@@ -96,6 +96,10 @@ me.update = function ({request}, {gist, token, user}) {
 };
 
 me.doThings = function ({request}, {github, curr}) {
+  if (!github) {
+    return 'No Gist/Github account specified';
+  }
+
   return me.download(github.gist)
     .then(me.process)
     .then(me.preparePatch(curr))
