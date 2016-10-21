@@ -1,8 +1,12 @@
 'use strict';
 
-let me = {};
+const HASHTAG = '#onthemove';
 
-me.req = function ({request, process: {env: {TWITTER_KEY, TWITTER_SECRET}}}, {token, secret}) {
+let me = {
+  HASHTAG
+};
+
+me.reqData = function ({request, process: {env: {TWITTER_KEY, TWITTER_SECRET}}}, {token, secret}) {
   return request.defaults({
     json: true,
     method: 'post',
@@ -15,98 +19,127 @@ me.req = function ({request, process: {env: {TWITTER_KEY, TWITTER_SECRET}}}, {to
   });
 };
 
-me.format = function ({emojiString}, data) {
-  return `${emojiString(data)} #onthemove`;
-};
-
-me.getPlaceId = function (_, req, {country, city}) {
+me.req = function (_, req, params) {
   return new Promise((resolve, reject) => {
-    req({
-      url: 'https://api.twitter.com/1.1/geo/search.json',
-      method: 'get',
-      qs: {
-        query: `${city} ${country}`,
-        granularity: 'city',
-        max_results: 1
-      }
-    }, (err, res, json) => {
+    req(params, (err, res, json) => {
       if (err || res.statusCode !== 200) {
-        reject(err || new Error(`Can't get place ID`));
+        reject(err || json);
         return;
       }
 
       resolve(json);
     });
+  });
+};
+
+me.getLastTweet = function (_, req, user) {
+  return me.req(req, {
+    url: 'https://api.twitter.com/1.1/statuses/user_timeline.json',
+    method: 'get',
+    qs: {
+      count: 200,
+      screen_name: user,
+      include_rts: false,
+      contributor_details: false,
+      exclude_replies: true,
+      trim_user: true
+    }
   })
-  .then(({result}) => result.places[0].id);
+  .then(json => {
+    return json
+      .filter(({text}) => text.indexOf(HASHTAG) !== -1)
+      .map(({text}) => text)[0];
+  })
+  .catch(err => (err && err.message) || new Error(`Can't fetch user(${user}) tweets`));
+};
+
+me.format = function ({local}, data) {
+  return `${local.emojiString(data)} ${HASHTAG}`;
+};
+
+me.getPlaceId = function (_, req, {country, city}) {
+  return me.req(req, {
+    url: 'https://api.twitter.com/1.1/geo/search.json',
+    method: 'get',
+    qs: {
+      query: `${city} ${country}`,
+      granularity: 'city',
+      max_results: 1
+    }
+  })
+  .then(({result}) => result.places[0].id)
+  .catch(err => (err && err.message) || new Error(`Can't get place ID`));
 };
 
 me.getMediaId = function ({maps}, req, prev, curr) {
-  return new Promise((resolve, reject) => {
-    req({
-      url: 'https://upload.twitter.com/1.1/media/upload.json',
-      formData: {
-        media: maps.downloadStream(prev, curr)
-      }
-    }, (err, res, json) => {
-      if (err || res.statusCode !== 200) {
-        reject(err || new Error(`Can't upload image to Twitter ${res.statusCode}`));
-        return;
-      }
-
-      resolve(json.media_id_string);
-    });
-  });
+  return me.req(req, {
+    url: 'https://upload.twitter.com/1.1/media/upload.json',
+    formData: {
+      media: maps.downloadStream(prev, curr)
+    }
+  })
+  .then(({media_id_string}) => media_id_string)
+  .catch(err => (err && err.message) || new Error(`Can't upload image to Twitter`));
 };
 
 me.postTweet = function (_, req, curr) {
   return ([mediaId, placeId]) => {
-    return new Promise((resolve, reject) => {
-      const qs = {
-        status: me.format(curr),
-        trim_user: true
-      };
+    const qs = {
+      status: me.format(curr),
+      trim_user: true
+    };
 
-      if (placeId) {
-        qs.place_id = placeId;
-      }
+    if (placeId) {
+      qs.place_id = placeId;
+    }
 
-      if (mediaId) {
-        qs.media_ids = mediaId;
-      }
+    if (mediaId) {
+      qs.media_ids = mediaId;
+    }
 
-      req({
-        qs, url: 'https://api.twitter.com/1.1/statuses/update.json'
-      }, (err, res, json) => {
-        if (err || res.statusCode !== 200) {
-          reject(err || new Error(`Can't post status update: ${json.errors || json}`));
-          return;
-        }
-
-        resolve();
-      });
-    });
+    return me.req(req, {
+      qs, url: 'https://api.twitter.com/1.1/statuses/update.json'
+    })
+    .then(() => undefined)
+    .catch(err => (err && err.message) || new Error(`Can't post status update: ${err.errors || err}`));
   };
 };
 
-me.tweet = function (_, {twitter, prev, curr}) {
-  const req = me.req(twitter);
-
-  // TODO: limit tweeting!!!
-  // TODO: handle empty prev
-
+me.prepareAndSend = function (_, req, prev, curr) {
   return Promise.all([
     me.getMediaId(req, prev, curr),
     me.getPlaceId(req, curr)
   ])
   .then(me.postTweet(req, curr))
-  .catch(err => err.message);
+  .catch(err => {
+    console.error(err.message);
+    return err.message;
+  });
+};
+
+me.tweet = function ({local}, {twitter, prev, curr}) {
+  // [instant] prevent if the same data cached in db
+  if (local.theSame(prev, curr, true)) {
+    return;
+  }
+
+  const req = me.reqData(twitter);
+
+  // [slow] prevent if last tweet is the same
+  return me.getLastTweet(req, twitter.user)
+    .then(tweet => {
+      if (tweet.indexOf(curr.flag) !== -1 && tweet.indexOf(curr.city) !== -1) {
+        return;
+      }
+
+      return me.prepareAndSend(req, prev, curr);
+    });
 };
 
 me = require('mee')(module, me, {
   request: require('request'),
 
-  emojiString: require('./local').emojiString,
+  local: require('./local'),
   maps: require('./maps'),
 
   process

@@ -53,7 +53,7 @@ me.save = function ({utils, local: {normalize, reformat}, db, gist, twitter}, {b
         twitter.tweet(data)
       ]);
     })
-    .then(([db = 'done', github = 'done', twitter = 'done']) => {
+    .then(([db, github, twitter]) => {
       // TODO: improve returned thingy
       res.status(200).json({message: {db, github, twitter}});
       return;

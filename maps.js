@@ -34,14 +34,19 @@ me.uriPath = function (_, locFrom, locTo) {
 
 me.getMapUrl = function ({process: {env: {MAPS_KEY}}}, locFrom, locTo) {
   const query = [
-    `markers=${me.uriMarker(locFrom, false)}`,
     `markers=${me.uriMarker(locTo)}`,
-    `path=${me.uriPath(locFrom, locTo)}`,
     'size=640x480',
     'format=png'
-  ].join('&');
+  ];
 
-  return encodeURI(`https://maps.googleapis.com/maps/api/staticmap?${query}&key=${MAPS_KEY}`);
+  if (locFrom.country && locFrom.city) {
+    query.push(
+      `path=${me.uriPath(locFrom, locTo)}`,
+      `markers=${me.uriMarker(locFrom, false)}`
+    );
+  }
+
+  return encodeURI(`https://maps.googleapis.com/maps/api/staticmap?${query.join('&')}&key=${MAPS_KEY}`);
 };
 
 me.downloadStream = function ({request}, locFrom, locTo) {

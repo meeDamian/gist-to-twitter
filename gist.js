@@ -101,7 +101,7 @@ me.doThings = function ({request}, {github, curr}) {
     .then(me.preparePatch(curr))
     .then(me.update(github))
     .catch(err => {
-      console.error(err);
+      console.error(err.message);
       return err.message;
     });
 };
