@@ -2,6 +2,10 @@
 
 let me = {};
 
+me.locString = function (_, {country, city}, sep = ', ') {
+  return [country, city].join(sep);
+};
+
 me.emojiString = function (_, {flag, city, phone}) {
   return [
     flag || undefined,
@@ -58,6 +62,13 @@ me.theSame = function (_, a, b, exactly = false) {
       A !== B :
       A.toLowerCase() !== B.toLowerCase();
   }).length === 0;
+};
+
+me.onlyRemoves = function (_, a, b) {
+  return ['country', 'city', 'phone']
+    .map(p => b[p] && a[p] !== b[p]) // 2nd empty and both not empty
+    .filter(v => v)
+    .length === 0;
 };
 
 me.reformat = function (_, hash, body) {

@@ -1,9 +1,11 @@
 'use strict';
 
 const HASHTAG = '#onthemove';
+const MAX_TWEET_FREQUENCY = 18e5; // 30 mins
 
 let me = {
-  HASHTAG
+  HASHTAG,
+  MAX_TWEET_FREQUENCY
 };
 
 me.reqData = function ({request, process: {env: {TWITTER_KEY, TWITTER_SECRET}}}, {token, secret}) {
@@ -33,6 +35,7 @@ me.req = function (_, req, params) {
 };
 
 me.getLastTweet = function (_, req, user) {
+  console.log(`[${req.hash}:twitter:latest] Getting latest tweets…`);
   return me.req(req, {
     url: 'https://api.twitter.com/1.1/statuses/user_timeline.json',
     method: 'get',
@@ -46,44 +49,62 @@ me.getLastTweet = function (_, req, user) {
     }
   })
   .then(json => {
+    console.log(`[${req.hash}:twitter:latest] ${json.length} latest tweets downloaded`);
     return json
       .filter(({text}) => text.indexOf(HASHTAG) !== -1)
-      .map(({text}) => text)[0];
+      .map(({text, created_at: at}) => ({text, at}))[0];
   })
-  .catch(err => (err && err.message) || new Error(`Can't fetch user(${user}) tweets`));
+  .then(tweet => {
+    console.log(`[${req.hash}:twitter:latest] Matching tweet${tweet ? ' ' : ' not '}found`);
+    return tweet;
+  })
+  .catch(err => {
+    throw (err && err.message) || 'Error getting existing tweets';
+  });
 };
 
 me.format = function ({local}, data) {
   return `${local.emojiString(data)} ${HASHTAG}`;
 };
 
-me.getPlaceId = function (_, req, {country, city}) {
+me.getPlaceId = function ({local: {locString}}, req, loc) {
+  console.log(`[${req.hash}:twitter:place] Getting placeId for '${locString(loc)}'…`);
   return me.req(req, {
     url: 'https://api.twitter.com/1.1/geo/search.json',
     method: 'get',
     qs: {
-      query: `${city} ${country}`,
+      query: locString(loc, ' '),
       granularity: 'city',
       max_results: 1
     }
   })
-  .then(({result}) => result.places[0].id)
-  .catch(err => (err && err.message) || new Error(`Can't get place ID`));
+  .then(({result}) => {
+    const {id} = result.places[0];
+    console.log(`[${req.hash}:twitter:place] PlaceId found: '${id}'`);
+    return id;
+  })
+  .catch(() => undefined);
 };
 
-me.getMediaId = function ({maps}, req, prev, curr) {
+me.getMediaId = function ({maps, local}, req, prev, curr) {
+  console.log(`[${req.hash}:twitter:map] Uploading map (${local.locString(prev)} → ${local.locString(curr)})…`);
   return me.req(req, {
     url: 'https://upload.twitter.com/1.1/media/upload.json',
     formData: {
       media: maps.downloadStream(prev, curr)
     }
   })
-  .then(m => m.media_id_string)
-  .catch(err => (err && err.message) || new Error(`Can't upload image to Twitter`));
+  .then(m => {
+    const id = m.media_id_string;
+    console.log(`[${req.hash}:twitter:map] Map image uploaded. ID: ${id}`);
+    return id;
+  });
 };
 
 me.postTweet = function (_, req, curr) {
   return ([mediaId, placeId]) => {
+    console.log(`[${req.hash}:twitter:tweet] Tweeting…`);
+
     const qs = {
       status: me.format(curr),
       trim_user: true
@@ -100,8 +121,14 @@ me.postTweet = function (_, req, curr) {
     return me.req(req, {
       qs, url: 'https://api.twitter.com/1.1/statuses/update.json'
     })
-    .then(() => undefined)
-    .catch(err => (err && err.message) || new Error(`Can't post status update: ${err.errors || err}`));
+    .then(tweet => {
+      const id = tweet.id_str;
+      console.log(`[${req.hash}:twitter:tweet] Tweeted: https://twitter.com/statuses/${id}…`);
+      return {id};
+    })
+    .catch(err => {
+      throw (err && err.message) || `Can't post status update: ${err.errors || err}`;
+    });
   };
 };
 
@@ -110,33 +137,49 @@ me.prepareAndSend = function (_, req, prev, curr) {
     me.getMediaId(req, prev, curr),
     me.getPlaceId(req, curr)
   ])
-  .then(me.postTweet(req, curr))
-  .catch(err => {
-    console.error(err.message);
-    return err.message;
-  });
+  .then(me.postTweet(req, curr));
 };
 
-me.tweet = function ({local}, {twitter, prev, curr}) {
+me.tweet = function ({local}, {twitter, hash, prev, curr}) {
   if (!twitter) {
-    return 'No account configured';
+    return {err: 'No account configured'};
   }
 
   // [instant] prevent if the same data cached in db
-  if (local.theSame(prev, curr, true)) {
+  if (local.theSame(prev, curr)) {
+    console.log(`[${hash}] Not tweeting due to cache match`);
+    return;
+  }
+
+  // [instant] prevent if new has everything the same, but less
+  if (local.onlyRemoves(prev, curr)) {
+    console.log(`[${hash}] Not tweeting info removal`);
     return;
   }
 
   const req = me.reqData(twitter);
+  req.hash = hash;
 
-  // [slow] prevent if last tweet is the same
+  // [slow] prevent based on previous tweet
   return me.getLastTweet(req, twitter.user)
-    .then(tweet => {
-      if (tweet.indexOf(curr.flag) !== -1 && tweet.indexOf(curr.city) !== -1) {
+    .then(({text, at}) => {
+      // don't send if previous tweet from the same country and city
+      if (text.indexOf(curr.flag) !== -1 && text.indexOf(curr.city) !== -1) {
+        console.log(`[${hash}] Not tweeting the same tweet twice in a row: '${curr.text}'`);
+        return;
+      }
+
+      // throttle tweeting to once every MAX_TWEET_FREQUENCY
+      if (new Date(new Date(at).getTime() + MAX_TWEET_FREQUENCY) > new Date()) {
+        console.log(`[${hash}] Tweeting throttled: '${curr.text}'`);
         return;
       }
 
       return me.prepareAndSend(req, prev, curr);
+    })
+    .catch(err => {
+      console.error(err);
+      return {err};
     });
 };
 

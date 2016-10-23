@@ -6,20 +6,12 @@ me.locString = function (_, {country, city}) {
   return `${city},${country}`;
 };
 
-me.uriMarker = function (_, loc, dest = true) {
-  const marker = [
-    `label:${dest ? 'B' : 'A'}`,
-    `color:${dest ? 'red' : 'gray'}`
-  ];
-
-  if (!dest) {
-    marker.push('size:mid');
-  }
-
-  // NOTE: has to be last
-  marker.push(me.locString(loc));
-
-  return marker.join('|');
+me.uriMarker = function (_, loc) {
+  return [
+    'color:red',
+    'size:mid',
+    me.locString(loc) // NOTE: has to be last
+  ].join('|');
 };
 
 me.uriPath = function (_, locFrom, locTo) {
@@ -41,8 +33,7 @@ me.getMapUrl = function ({process: {env: {MAPS_KEY}}}, locFrom, locTo) {
 
   if (locFrom.country && locFrom.city) {
     query.push(
-      `path=${me.uriPath(locFrom, locTo)}`,
-      `markers=${me.uriMarker(locFrom, false)}`
+      `path=${me.uriPath(locFrom, locTo)}`
     );
   }
 

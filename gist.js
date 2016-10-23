@@ -18,9 +18,10 @@ let me = {
 
 me.download = function ({request}, gist) {
   return new Promise((resolve, reject) => {
-    request.get({json: true,
+    request.get({
       url: `${URL}/${gist}?${GITHUB_AUTH}`,
-      headers: USER_AGENT
+      headers: USER_AGENT,
+      json: true
     }, (err, res, json) => {
       if (err || res.statusCode !== 200) {
         reject(err || new Error(`Can't download gist(${gist}): ${json.message}`));
@@ -56,7 +57,7 @@ me.preparePatch = function ({theSame}, body) {
   return ({json, text}) => {
     const files = {};
 
-    if (!theSame(body, json)) {
+    if (!theSame(body, json, true)) {
       files[JSONFILE] = {
         content: JSON.stringify({
           country: body.country,
@@ -89,7 +90,7 @@ me.update = function ({request}, {gist, token, user}) {
           return;
         }
 
-        resolve();
+        resolve(json);
       });
     });
   };
@@ -104,9 +105,10 @@ me.doThings = function ({request}, {github, curr}) {
     .then(me.process)
     .then(me.preparePatch(curr))
     .then(me.update(github))
+    .then(({id}) => ({id}))
     .catch(err => {
       console.error(err.message);
-      return err.message;
+      return {err: err.message};
     });
 };
 

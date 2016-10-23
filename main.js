@@ -23,9 +23,9 @@ me.handleSave = function ({db, local: {theSame}}, {hash, prev, curr}) {
   }
 
   return db.save(hash, curr)
-    .then(() => undefined)
+    .then(() => ({id: hash}))
     .catch(err => {
-      console.error('handleSave():', err);
+      console.error(err);
       return `Can't save to db ${hash}: ${err.message}`;
     });
 };
@@ -47,6 +47,10 @@ me.save = function ({utils, local: {normalize, reformat}, db, gist, twitter}, {b
     .then(me.handleNoHash(hash))
     .then(reformat(hash, body))
     .then(data => {
+      // all those promises return either:
+      //  * undefined - no error, but action not performed/not necessary
+      //  * {id: ''}  - action peformed successfully; resource `id`
+      //  * {err: ''} - action not performed due to an error
       return Promise.all([
         me.handleSave(data),
         gist.doThings(data),
@@ -54,8 +58,7 @@ me.save = function ({utils, local: {normalize, reformat}, db, gist, twitter}, {b
       ]);
     })
     .then(([db, github, twitter]) => {
-      // TODO: improve returned thingy
-      res.status(200).json({message: {db, github, twitter}});
+      res.status(200).json({db, github, twitter});
       return;
     })
     .catch(err => {
