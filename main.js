@@ -30,7 +30,7 @@ me.handleSave = function ({db, local: {theSame}}, {hash, prev, curr}) {
     });
 };
 
-me.save = function ({utils, local: {normalize, reformat}, db, gist, twitter}, {body}, res) {
+me.save = function ({utils, local: {normalize, reformat}, db, gist, twitter}, body, res, isPatch = false) {
   if (!body.hash) {
     res.status(401).json({err: `'hash' must be provided`});
     return;
@@ -41,11 +41,21 @@ me.save = function ({utils, local: {normalize, reformat}, db, gist, twitter}, {b
   body.hash = undefined;
   delete body.hash;
 
+  // strip everything we don't care about;
+  // add .flag
   body = normalize(body);
 
   db.get(hash)
+    .then(data => {
+      if (isPatch && !data) {
+        const err = {err: 'Can\'t PATCH something that doesn\'t exist'};
+        throw err;
+      }
+
+      return data;
+    })
     .then(me.handleNoHash(hash))
-    .then(reformat(hash, body))
+    .then(reformat(hash, body, isPatch))
     .then(data => {
       // all those promises return either:
       //  * undefined - no error, but action not performed/not necessary
@@ -71,7 +81,8 @@ me.save = function ({utils, local: {normalize, reformat}, db, gist, twitter}, {b
 me.main = function ({express, process: {env: {PORT = 3000}}, jsonParser}) {
   const app = express();
   app.use(jsonParser);
-  app.post('/', me.save);
+  app.post('/', ({body}, res) => me.save(body, res));
+  app.patch('/', ({body}, res) => me.save(body, res, true));
   app.get('/', (req, res) => res.status(200).send('OK'));
   app.listen(PORT);
 };

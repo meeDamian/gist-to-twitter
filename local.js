@@ -43,6 +43,16 @@ me.normalize = function ({flag}, {country, city, phone, at}, extended = false) {
   return out;
 };
 
+me.patch = function (_, a, b) {
+  const choose = n => b[n] || a[n];
+
+  return {
+    country: choose('country'),
+    city: choose('city'),
+    phone: choose('phone')
+  };
+};
+
 me.theSame = function (_, a, b, exactly = false) {
   return ['country', 'city', 'phone', 'flag'].filter(p => {
     const A = a[p];
@@ -71,8 +81,12 @@ me.onlyRemoves = function (_, a, b) {
     .length === 0;
 };
 
-me.reformat = function (_, hash, body) {
+me.reformat = function (_, hash, body, isPatch = false) {
   return data => {
+    if (isPatch) {
+      body = me.patch(data, body);
+    }
+
     const struct = {
       hash,
       prev: me.normalize(data, true),
