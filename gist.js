@@ -80,6 +80,10 @@ me.preparePatch = function ({theSame}, body) {
 
 me.update = function ({request}, {gist, token, user}) {
   return body => {
+    if (Object.keys(body).length === 0) {
+      return;
+    }
+
     return new Promise((resolve, reject) => {
       request.patch({json: true, body, auth: {user, pass: token},
         url: `${URL}/${gist}`,
@@ -105,7 +109,13 @@ me.doThings = function ({request}, {github, curr}) {
     .then(me.process)
     .then(me.preparePatch(curr))
     .then(me.update(github))
-    .then(({id}) => ({id}))
+    .then(data => {
+      if (data) {
+        return {id: data.id};
+      }
+
+      return;
+    })
     .catch(err => {
       console.error(err.message);
       return {err: err.message};
