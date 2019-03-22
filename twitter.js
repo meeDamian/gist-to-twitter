@@ -169,15 +169,6 @@ me.prepareAndSend = function(_, req, prev, curr) {
 	]).then(me.postTweet(req, curr));
 };
 
-// No clue how it got here, and what it is.
-// me.preTweet = function({db}, hash) {
-// 	db.get(hash).then(data => {
-// 		if (!data) {
-// 			throw 'data not avail';
-// 		}
-// 	});
-// };
-
 me.tweet = function({local}, {twitter, hash, prev, curr}) {
 	if (!twitter) {
 		return {err: 'No account configured'};
