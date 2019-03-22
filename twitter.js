@@ -71,7 +71,7 @@ me.getLastTweet = function(_, req, user) {
 					tweet ? ' ' : ' not '
 				}found`
 			);
-			return tweet;
+			return tweet || {};
 		})
 		.catch(error => {
 			throw (error && error.message) || 'Error getting existing tweets';
