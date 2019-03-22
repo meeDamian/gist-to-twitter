@@ -162,7 +162,7 @@ me.tweet = function ({local}, {twitter, hash, prev, curr}) {
 
   // [slow] prevent based on previous tweet
   return me.getLastTweet(req, twitter.user)
-    .then(({text, at}) => {
+    .then(({text = "", at = 0}) => {
       // don't send if previous tweet from the same country and city
       if (text.indexOf(curr.flag) !== -1 && text.indexOf(curr.city) !== -1) {
         console.log(`[${hash}] Not tweeting the same tweet twice in a row: '${curr.text}'`);
