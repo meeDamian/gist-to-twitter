@@ -2,49 +2,59 @@
 
 let me = {};
 
-me.locString = function (_, {country, city}) {
-  return `${city},${country}`;
+me.locString = function(_, {country, city}) {
+	return `${city},${country}`;
 };
 
-me.uriMarker = function (_, loc) {
-  return [
-    'color:red',
-    'size:mid',
-    me.locString(loc) // NOTE: has to be last
-  ].join('|');
+me.uriMarker = function(_, loc) {
+	return [
+		'color:red',
+		'size:mid',
+		me.locString(loc) // NOTE: has to be last
+	].join('|');
 };
 
-me.uriPath = function (_, locFrom, locTo) {
-  return [
-    'color:blue',
-    'geodesic:true',
-    'weight:4',
-    me.locString(locFrom),
-    me.locString(locTo)
-  ].join('|');
+me.uriPath = function(_, locFrom, locTo) {
+	return [
+		'color:blue',
+		'geodesic:true',
+		'weight:4',
+		me.locString(locFrom),
+		me.locString(locTo)
+	].join('|');
 };
 
-me.getMapUrl = function ({process: {env: {MAPS_KEY}}}, locFrom, locTo) {
-  const query = [
-    `markers=${me.uriMarker(locTo)}`,
-    'size=640x480',
-    'format=png'
-  ];
+me.getMapUrl = function(
+	{
+		process: {
+			env: {MAPS_KEY}
+		}
+	},
+	locFrom,
+	locTo
+) {
+	const query = [
+		`markers=${me.uriMarker(locTo)}`,
+		'size=640x480',
+		'format=png'
+	];
 
-  if (locFrom.country && locFrom.city) {
-    query.push(
-      `path=${me.uriPath(locFrom, locTo)}`
-    );
-  }
+	if (locFrom.country && locFrom.city) {
+		query.push(`path=${me.uriPath(locFrom, locTo)}`);
+	}
 
-  return encodeURI(`https://maps.googleapis.com/maps/api/staticmap?${query.join('&')}&key=${MAPS_KEY}`);
+	return encodeURI(
+		`https://maps.googleapis.com/maps/api/staticmap?${query.join(
+			'&'
+		)}&key=${MAPS_KEY}`
+	);
 };
 
-me.downloadStream = function ({request}, locFrom, locTo) {
-  return request.get(me.getMapUrl(locFrom, locTo));
+me.downloadStream = function({request}, locFrom, locTo) {
+	return request.get(me.getMapUrl(locFrom, locTo));
 };
 
 me = require('mee')(module, me, {
-  request: require('request'),
-  process
+	request: require('request'),
+	process
 });

@@ -1,5 +1,4 @@
 #!/usr/bin/env node
 'use strict';
 
-require('./main')
-  .main();
+require('./main').main();

@@ -8,9 +8,8 @@
     "test": "xo && nyc ava && nyc report --reporter=text-lcov > coverage.lcov"
   },
   "engines": {
-    "node": "^6.6.0",
-    "npm": "^3.10.8",
-    "yarn": "^0.15.1"
+    "node": "^11.11.0",
+    "npm": "^6.9.0"
   },
   "repository": {
     "type": "git",
@@ -23,10 +22,10 @@
   },
   "homepage": "https://github.com/meeDamian/gist-to-twitter#readme",
   "devDependencies": {
-    "ava": "^0.16.0",
-    "coveralls": "^2.11.14",
-    "nyc": "^8.3.2",
-    "xo": "^0.17.0"
+    "ava": "^1.3.1",
+    "coveralls": "^3.0.3",
+    "nyc": "^13.3.0",
+    "xo": "^0.24.0"
   },
   "dependencies": {
     "body-parser": "^1.15.2",
@@ -41,8 +40,9 @@
     "envs": [
       "node"
     ],
-    "space": true,
+    "prettier": true,
     "rules": {
+      "promise/prefer-await-to-then": "never",
       "camelcase": [
         2,
         {
