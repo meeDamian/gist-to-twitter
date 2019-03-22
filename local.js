@@ -2,11 +2,11 @@
 
 let me = {};
 
-me.locString = function(_, {country, city}, sep = ', ') {
+me.locString = function (_, {country, city}, sep = ', ') {
 	return [country, city].join(sep);
 };
 
-me.emojiString = function(_, {flag, city, phone}) {
+me.emojiString = function (_, {flag, city, phone}) {
 	return [
 		flag || undefined,
 		city || undefined,
@@ -16,7 +16,7 @@ me.emojiString = function(_, {flag, city, phone}) {
 		.join(' ');
 };
 
-me.normalize = function({flag}, {country, city, phone, at}, extended = false) {
+me.normalize = function ({flag}, {country, city, phone, at}, extended = false) {
 	const out = {};
 
 	if (country && typeof country === 'string') {
@@ -45,7 +45,7 @@ me.normalize = function({flag}, {country, city, phone, at}, extended = false) {
 	return out;
 };
 
-me.patch = function(_, a, b) {
+me.patch = function (_, a, b) {
 	const choose = n => b[n] || a[n];
 
 	return {
@@ -55,7 +55,7 @@ me.patch = function(_, a, b) {
 	};
 };
 
-me.theSame = function(_, a, b, exactly = false) {
+me.theSame = function (_, a, b, exactly = false) {
 	return (
 		['country', 'city', 'phone', 'flag'].filter(p => {
 			const A = a[p];
@@ -76,7 +76,7 @@ me.theSame = function(_, a, b, exactly = false) {
 	);
 };
 
-me.onlyRemoves = function(_, a, b) {
+me.onlyRemoves = function (_, a, b) {
 	return (
 		['country', 'city', 'phone']
 			.map(p => b[p] && a[p] !== b[p]) // 2nd empty and both not empty
@@ -84,7 +84,7 @@ me.onlyRemoves = function(_, a, b) {
 	);
 };
 
-me.reformat = function(_, hash, body, isPatch = false) {
+me.reformat = function (_, hash, body, isPatch = false) {
 	return data => {
 		if (isPatch) {
 			body = me.patch(data, body);

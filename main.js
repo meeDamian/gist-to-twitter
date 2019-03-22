@@ -2,7 +2,7 @@
 
 let me = {};
 
-me.handleNoHash = function({db}, hash) {
+me.handleNoHash = function ({db}, hash) {
 	return data => {
 		if (!data) {
 			return db
@@ -18,7 +18,7 @@ me.handleNoHash = function({db}, hash) {
 	};
 };
 
-me.handleSave = function({db, local: {theSame}}, {hash, prev, curr}) {
+me.handleSave = function ({db, local: {theSame}}, {hash, prev, curr}) {
 	if (theSame(prev, curr, true)) {
 		return;
 	}
@@ -32,14 +32,9 @@ me.handleSave = function({db, local: {theSame}}, {hash, prev, curr}) {
 		});
 };
 
-me.save = function(
-	{utils, local: {normalize, reformat}, db, gist, twitter},
-	body,
-	res,
-	isPatch = false
-) {
+me.save = function ({utils, local: {normalize, reformat}, db, gist, twitter}, body, res, isPatch = false) {
 	if (!body.hash) {
-		res.status(401).json({err: "'hash' must be provided"});
+		res.status(401).json({err: '\'hash\' must be provided'});
 		return;
 	}
 
@@ -55,7 +50,7 @@ me.save = function(
 	db.get(hash)
 		.then(data => {
 			if (isPatch && !data) {
-				const err = {err: "Can't PATCH something that doesn't exist"};
+				const err = {err: 'Can\'t PATCH something that doesn\'t exist'};
 				throw err;
 			}
 
@@ -83,13 +78,7 @@ me.save = function(
 		});
 };
 
-me.main = function({
-	express,
-	process: {
-		env: {PORT = 3000}
-	},
-	jsonParser
-}) {
+me.main = function ({express, process: {env: {PORT = 3000}}, jsonParser}) {
 	const app = express();
 	app.use(jsonParser);
 	app.post('/', ({body}, res) => me.save(body, res));

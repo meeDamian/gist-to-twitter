@@ -2,16 +2,11 @@
 
 let me = {};
 
-me.connection = function({
-	db,
-	process: {
-		env: {DATABASE_URL}
-	}
-}) {
+me.connection = function ({db, process: {env: {DATABASE_URL}}}) {
 	return db()(DATABASE_URL);
 };
 
-me.get = function(_, hash) {
+me.get = function (_, hash) {
 	return me.connection().oneOrNone(
 		`
     SELECT  hash, country, city, phone, data.at AS at,
@@ -38,7 +33,7 @@ me.get = function(_, hash) {
 	);
 };
 
-me.save = function(_, hash, {country, city, phone}) {
+me.save = function (_, hash, {country, city, phone}) {
 	return me
 		.connection()
 		.none(
@@ -47,7 +42,7 @@ me.save = function(_, hash, {country, city, phone}) {
 		);
 };
 
-me.newHash = function(_, hash) {
+me.newHash = function (_, hash) {
 	return me.connection().none('INSERT INTO refs (hash) VALUES ($1)', [hash]);
 };
 

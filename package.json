@@ -40,7 +40,6 @@
     "envs": [
       "node"
     ],
-    "prettier": true,
     "rules": {
       "promise/prefer-await-to-then": "never",
       "camelcase": [

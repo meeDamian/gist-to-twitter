@@ -2,11 +2,11 @@
 
 let me = {};
 
-me.locString = function(_, {country, city}) {
+me.locString = function (_, {country, city}) {
 	return `${city},${country}`;
 };
 
-me.uriMarker = function(_, loc) {
+me.uriMarker = function (_, loc) {
 	return [
 		'color:red',
 		'size:mid',
@@ -14,7 +14,7 @@ me.uriMarker = function(_, loc) {
 	].join('|');
 };
 
-me.uriPath = function(_, locFrom, locTo) {
+me.uriPath = function (_, locFrom, locTo) {
 	return [
 		'color:blue',
 		'geodesic:true',
@@ -24,15 +24,7 @@ me.uriPath = function(_, locFrom, locTo) {
 	].join('|');
 };
 
-me.getMapUrl = function(
-	{
-		process: {
-			env: {MAPS_KEY}
-		}
-	},
-	locFrom,
-	locTo
-) {
+me.getMapUrl = function ({process: {env: {MAPS_KEY}}}, locFrom, locTo) {
 	const query = [
 		`markers=${me.uriMarker(locTo)}`,
 		'size=640x480',
@@ -50,8 +42,10 @@ me.getMapUrl = function(
 	);
 };
 
-me.downloadStream = function({request}, locFrom, locTo) {
-	return request.get(me.getMapUrl(locFrom, locTo));
+me.downloadStream = function ({request}, locFrom, locTo) {
+	const url = me.getMapUrl(locFrom, locTo);
+	console.log(url);
+	return request.get(url);
 };
 
 me = require('mee')(module, me, {

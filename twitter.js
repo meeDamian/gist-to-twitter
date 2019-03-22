@@ -8,15 +8,7 @@ let me = {
 	MAX_TWEET_FREQUENCY
 };
 
-me.reqData = function(
-	{
-		request,
-		process: {
-			env: {TWITTER_KEY, TWITTER_SECRET}
-		}
-	},
-	{token, secret}
-) {
+me.reqData = function ({request, process: {env: {TWITTER_KEY, TWITTER_SECRET}}}, {token, secret}) {
 	return request.defaults({
 		json: true,
 		method: 'post',
@@ -29,7 +21,7 @@ me.reqData = function(
 	});
 };
 
-me.req = function(_, req, params) {
+me.req = function (_, req, params) {
 	return new Promise((resolve, reject) => {
 		req(params, (err, res, json) => {
 			if (err || res.statusCode !== 200) {
@@ -42,7 +34,7 @@ me.req = function(_, req, params) {
 	});
 };
 
-me.getLastTweet = function(_, req, user) {
+me.getLastTweet = function (_, req, user) {
 	console.log(`[${req.hash}:twitter:latest] Getting latest tweets…`);
 	return me
 		.req(req, {
@@ -78,11 +70,11 @@ me.getLastTweet = function(_, req, user) {
 		});
 };
 
-me.format = function({local}, data) {
+me.format = function ({local}, data) {
 	return `${local.emojiString(data)} ${HASHTAG}`;
 };
 
-me.getPlaceId = function({local: {locString}}, req, loc) {
+me.getPlaceId = function ({local: {locString}}, req, loc) {
 	console.log(
 		`[${req.hash}:twitter:place] Getting placeId for '${locString(loc)}'…`
 	);
@@ -104,7 +96,7 @@ me.getPlaceId = function({local: {locString}}, req, loc) {
 		.catch(() => undefined);
 };
 
-me.getMediaId = function({maps, local}, req, prev, curr) {
+me.getMediaId = function ({maps, local}, req, prev, curr) {
 	console.log(
 		`[${req.hash}:twitter:map] Uploading map (${local.locString(
 			prev
@@ -124,7 +116,7 @@ me.getMediaId = function({maps, local}, req, prev, curr) {
 		});
 };
 
-me.postTweet = function(_, req, curr) {
+me.postTweet = function (_, req, curr) {
 	return ([mediaId, placeId]) => {
 		console.log(`[${req.hash}:twitter:tweet] Tweeting…`);
 
@@ -162,14 +154,14 @@ me.postTweet = function(_, req, curr) {
 	};
 };
 
-me.prepareAndSend = function(_, req, prev, curr) {
+me.prepareAndSend = function (_, req, prev, curr) {
 	return Promise.all([
 		me.getMediaId(req, prev, curr),
 		me.getPlaceId(req, curr)
 	]).then(me.postTweet(req, curr));
 };
 
-me.tweet = function({local}, {twitter, hash, prev, curr}) {
+me.tweet = function ({local}, {twitter, hash, prev, curr}) {
 	if (!twitter) {
 		return {err: 'No account configured'};
 	}

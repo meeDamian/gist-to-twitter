@@ -18,7 +18,7 @@ let me = {
 	GITHUB_AUTH
 };
 
-me.download = function({request}, gist) {
+me.download = function ({request}, gist) {
 	return new Promise((resolve, reject) => {
 		request.get(
 			{
@@ -40,7 +40,7 @@ me.download = function({request}, gist) {
 	});
 };
 
-me.process = function(_, {gist, json: {message, files}}) {
+me.process = function (_, {gist, json: {message, files}}) {
 	if (message && message === ERR_NOT_FOUND) {
 		throw new Error(`gist(${gist}) ${ERR_NOT_FOUND}`);
 	}
@@ -60,7 +60,7 @@ me.process = function(_, {gist, json: {message, files}}) {
 	return out;
 };
 
-me.preparePatch = function({theSame}, body) {
+me.preparePatch = function ({theSame}, body) {
 	return ({json, text}) => {
 		const files = {};
 
@@ -89,7 +89,7 @@ me.preparePatch = function({theSame}, body) {
 	};
 };
 
-me.update = function({request}, {gist, token, user}) {
+me.update = function ({request}, {gist, token, user}) {
 	return body => {
 		if (Object.keys(body).length === 0) {
 			return;
@@ -119,7 +119,7 @@ me.update = function({request}, {gist, token, user}) {
 	};
 };
 
-me.doThings = function(_, {github, curr}) {
+me.doThings = function (_, {github, curr}) {
 	if (!github) {
 		return 'No account configured';
 	}
